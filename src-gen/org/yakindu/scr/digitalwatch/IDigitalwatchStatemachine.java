@@ -73,6 +73,8 @@ public interface IDigitalwatchStatemachine
 		public void setTimeMode(boolean value);
 		public boolean getChronoMode();
 		public void setChronoMode(boolean value);
+		public boolean getFirsttime();
+		public void setFirsttime(boolean value);
 
 	}
 

@@ -3,7 +3,7 @@ import org.yakindu.scr.ITimer;
 
 public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
-	private final boolean[] timeEvents = new boolean[6];
+	private final boolean[] timeEvents = new boolean[8];
 
 	private final class SCIButtonsImpl implements SCIButtons {
 
@@ -123,15 +123,24 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			this.chronoMode = value;
 		}
 
+		private boolean firsttime;
+		public boolean getFirsttime() {
+			return firsttime;
+		}
+
+		public void setFirsttime(boolean value) {
+			this.firsttime = value;
+		}
+
 	}
 
 	private SCIStateImpl sCIState;
 
 	public enum State {
-		main_region_digitalwatch, main_region_digitalwatch_Time_counting_Counting, main_region_digitalwatch_Display_refreshing_RefreshingTime, main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm, main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm, main_region_digitalwatch_Display_refreshing_ChromoMode, main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_RefreshingChrono, main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_resetChronoTime, main_region_digitalwatch_Counting_chromo_time_ChronoIdle, main_region_digitalwatch_Counting_chromo_time_countingChrono, main_region_digitalwatch_Display_glowing_GlowOff, main_region_digitalwatch_Display_glowing_GlowOn, main_region_digitalwatch_Display_glowing_GlowDelay, $NullState$
+		main_region_digitalwatch, main_region_digitalwatch_Time_counting_Counting, main_region_digitalwatch_Display_refreshing_RefreshingTime, main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm, main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm, main_region_digitalwatch_Display_refreshing_ChromoMode, main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_RefreshingChrono, main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_resetChronoTime, main_region_digitalwatch_Display_refreshing_TimeEditCheck, main_region_digitalwatch_Display_refreshing_TimeEditMode, main_region_digitalwatch_Display_refreshing_AlarmEditCheck, main_region_digitalwatch_Display_refreshing_AlarmEditMode, main_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start, main_region_digitalwatch_Counting_chromo_time_ChronoIdle, main_region_digitalwatch_Counting_chromo_time_countingChrono, main_region_digitalwatch_InitializeTime_Idle, main_region_digitalwatch_Display_glowing_GlowOff, main_region_digitalwatch_Display_glowing_GlowOn, main_region_digitalwatch_Display_glowing_GlowDelay, $NullState$
 	};
 
-	private final State[] stateVector = new State[4];
+	private final State[] stateVector = new State[5];
 
 	private int nextStateIndex;
 
@@ -152,7 +161,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		if (timer == null) {
 			throw new IllegalStateException("timer not set.");
 		}
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 5; i++) {
 			stateVector[i] = State.$NullState$;
 		}
 
@@ -162,6 +171,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		sCIState.timeMode = false;
 
 		sCIState.chronoMode = false;
+
+		sCIState.firsttime = false;
 	}
 
 	public void enter() {
@@ -193,10 +204,13 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		nextStateIndex = 2;
 		stateVector[2] = State.main_region_digitalwatch_Counting_chromo_time_ChronoIdle;
 
+		nextStateIndex = 3;
+		stateVector[3] = State.main_region_digitalwatch_InitializeTime_Idle;
+
 		sCIDisplay.operationCallback.unsetIndiglo();
 
-		nextStateIndex = 3;
-		stateVector[3] = State.main_region_digitalwatch_Display_glowing_GlowOff;
+		nextStateIndex = 4;
+		stateVector[4] = State.main_region_digitalwatch_Display_glowing_GlowOff;
 	}
 
 	public void exit() {
@@ -239,6 +253,30 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				stateVector[1] = State.$NullState$;
 				break;
 
+			case main_region_digitalwatch_Display_refreshing_TimeEditCheck :
+				nextStateIndex = 1;
+				stateVector[1] = State.$NullState$;
+
+				timer.unsetTimer(this, 4);
+				break;
+
+			case main_region_digitalwatch_Display_refreshing_TimeEditMode :
+				nextStateIndex = 1;
+				stateVector[1] = State.$NullState$;
+				break;
+
+			case main_region_digitalwatch_Display_refreshing_AlarmEditCheck :
+				nextStateIndex = 1;
+				stateVector[1] = State.$NullState$;
+
+				timer.unsetTimer(this, 5);
+				break;
+
+			case main_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start :
+				nextStateIndex = 1;
+				stateVector[1] = State.$NullState$;
+				break;
+
 			default :
 				break;
 		}
@@ -253,7 +291,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 4);
+				timer.unsetTimer(this, 6);
 				break;
 
 			default :
@@ -261,21 +299,31 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		}
 
 		switch (stateVector[3]) {
-			case main_region_digitalwatch_Display_glowing_GlowOff :
+			case main_region_digitalwatch_InitializeTime_Idle :
 				nextStateIndex = 3;
 				stateVector[3] = State.$NullState$;
+				break;
+
+			default :
+				break;
+		}
+
+		switch (stateVector[4]) {
+			case main_region_digitalwatch_Display_glowing_GlowOff :
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
 				break;
 
 			case main_region_digitalwatch_Display_glowing_GlowOn :
-				nextStateIndex = 3;
-				stateVector[3] = State.$NullState$;
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
 				break;
 
 			case main_region_digitalwatch_Display_glowing_GlowDelay :
-				nextStateIndex = 3;
-				stateVector[3] = State.$NullState$;
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
 
-				timer.unsetTimer(this, 5);
+				timer.unsetTimer(this, 7);
 				break;
 
 			default :
@@ -333,16 +381,31 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				return stateVector[1] == State.main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_RefreshingChrono;
 			case main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_resetChronoTime :
 				return stateVector[1] == State.main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_resetChronoTime;
+			case main_region_digitalwatch_Display_refreshing_TimeEditCheck :
+				return stateVector[1] == State.main_region_digitalwatch_Display_refreshing_TimeEditCheck;
+			case main_region_digitalwatch_Display_refreshing_TimeEditMode :
+				return stateVector[1] == State.main_region_digitalwatch_Display_refreshing_TimeEditMode;
+			case main_region_digitalwatch_Display_refreshing_AlarmEditCheck :
+				return stateVector[1] == State.main_region_digitalwatch_Display_refreshing_AlarmEditCheck;
+			case main_region_digitalwatch_Display_refreshing_AlarmEditMode :
+				return stateVector[1].ordinal() >= State.main_region_digitalwatch_Display_refreshing_AlarmEditMode
+						.ordinal()
+						&& stateVector[1].ordinal() <= State.main_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start
+								.ordinal();
+			case main_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start :
+				return stateVector[1] == State.main_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start;
 			case main_region_digitalwatch_Counting_chromo_time_ChronoIdle :
 				return stateVector[2] == State.main_region_digitalwatch_Counting_chromo_time_ChronoIdle;
 			case main_region_digitalwatch_Counting_chromo_time_countingChrono :
 				return stateVector[2] == State.main_region_digitalwatch_Counting_chromo_time_countingChrono;
+			case main_region_digitalwatch_InitializeTime_Idle :
+				return stateVector[3] == State.main_region_digitalwatch_InitializeTime_Idle;
 			case main_region_digitalwatch_Display_glowing_GlowOff :
-				return stateVector[3] == State.main_region_digitalwatch_Display_glowing_GlowOff;
+				return stateVector[4] == State.main_region_digitalwatch_Display_glowing_GlowOff;
 			case main_region_digitalwatch_Display_glowing_GlowOn :
-				return stateVector[3] == State.main_region_digitalwatch_Display_glowing_GlowOn;
+				return stateVector[4] == State.main_region_digitalwatch_Display_glowing_GlowOn;
 			case main_region_digitalwatch_Display_glowing_GlowDelay :
-				return stateVector[3] == State.main_region_digitalwatch_Display_glowing_GlowDelay;
+				return stateVector[4] == State.main_region_digitalwatch_Display_glowing_GlowDelay;
 			default :
 				return false;
 		}
@@ -443,37 +506,91 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			nextStateIndex = 1;
 			stateVector[1] = State.main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_RefreshingChrono;
 		} else {
-			if (sCIButtons.bottomLeftPressed) {
+			if (sCIButtons.bottomRightPressed) {
+				switch (stateVector[1]) {
+					case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm :
+						nextStateIndex = 1;
+						stateVector[1] = State.$NullState$;
+
+						timer.unsetTimer(this, 1);
+						break;
+
+					case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm :
+						nextStateIndex = 1;
+						stateVector[1] = State.$NullState$;
+
+						timer.unsetTimer(this, 2);
+						break;
+
+					default :
+						break;
+				}
+
+				timer.setTimer(this, 4, 1500, false);
+
 				nextStateIndex = 1;
-				stateVector[1] = State.$NullState$;
-
-				timer.unsetTimer(this, 1);
-
-				timer.setTimer(this, 2, 1 * 1000, false);
-
-				sCIDisplay.operationCallback.refreshTimeDisplay();
-
-				sCIDisplay.operationCallback.refreshDateDisplay();
-
-				nextStateIndex = 1;
-				stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm;
+				stateVector[1] = State.main_region_digitalwatch_Display_refreshing_TimeEditCheck;
 			} else {
-				if (timeEvents[1]) {
+				if (sCIButtons.bottomLeftPressed) {
+					switch (stateVector[1]) {
+						case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm :
+							nextStateIndex = 1;
+							stateVector[1] = State.$NullState$;
+
+							timer.unsetTimer(this, 1);
+							break;
+
+						case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm :
+							nextStateIndex = 1;
+							stateVector[1] = State.$NullState$;
+
+							timer.unsetTimer(this, 2);
+							break;
+
+						default :
+							break;
+					}
+
+					timer.setTimer(this, 5, 1500, false);
+
 					nextStateIndex = 1;
-					stateVector[1] = State.$NullState$;
+					stateVector[1] = State.main_region_digitalwatch_Display_refreshing_AlarmEditCheck;
+				} else {
+					if (sCIButtons.bottomLeftPressed) {
+						nextStateIndex = 1;
+						stateVector[1] = State.$NullState$;
 
-					timer.unsetTimer(this, 1);
+						timer.unsetTimer(this, 1);
 
-					timer.setTimer(this, 1, 1 * 1000, false);
+						sCILogicUnit.operationCallback.setAlarm();
 
-					sCIDisplay.operationCallback.refreshTimeDisplay();
+						timer.setTimer(this, 2, 1 * 1000, false);
 
-					sCIDisplay.operationCallback.refreshDateDisplay();
+						sCIDisplay.operationCallback.refreshTimeDisplay();
 
-					sCIDisplay.operationCallback.refreshAlarmDisplay();
+						sCIDisplay.operationCallback.refreshDateDisplay();
 
-					nextStateIndex = 1;
-					stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm;
+						nextStateIndex = 1;
+						stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm;
+					} else {
+						if (timeEvents[1]) {
+							nextStateIndex = 1;
+							stateVector[1] = State.$NullState$;
+
+							timer.unsetTimer(this, 1);
+
+							timer.setTimer(this, 1, 1 * 1000, false);
+
+							sCIDisplay.operationCallback.refreshTimeDisplay();
+
+							sCIDisplay.operationCallback.refreshDateDisplay();
+
+							sCIDisplay.operationCallback.refreshAlarmDisplay();
+
+							nextStateIndex = 1;
+							stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm;
+						}
+					}
 				}
 			}
 		}
@@ -512,37 +629,91 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			nextStateIndex = 1;
 			stateVector[1] = State.main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_RefreshingChrono;
 		} else {
-			if (sCIButtons.bottomLeftPressed) {
+			if (sCIButtons.bottomRightPressed) {
+				switch (stateVector[1]) {
+					case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm :
+						nextStateIndex = 1;
+						stateVector[1] = State.$NullState$;
+
+						timer.unsetTimer(this, 1);
+						break;
+
+					case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm :
+						nextStateIndex = 1;
+						stateVector[1] = State.$NullState$;
+
+						timer.unsetTimer(this, 2);
+						break;
+
+					default :
+						break;
+				}
+
+				timer.setTimer(this, 4, 1500, false);
+
 				nextStateIndex = 1;
-				stateVector[1] = State.$NullState$;
-
-				timer.unsetTimer(this, 2);
-
-				timer.setTimer(this, 1, 1 * 1000, false);
-
-				sCIDisplay.operationCallback.refreshTimeDisplay();
-
-				sCIDisplay.operationCallback.refreshDateDisplay();
-
-				sCIDisplay.operationCallback.refreshAlarmDisplay();
-
-				nextStateIndex = 1;
-				stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm;
+				stateVector[1] = State.main_region_digitalwatch_Display_refreshing_TimeEditCheck;
 			} else {
-				if (timeEvents[2]) {
+				if (sCIButtons.bottomLeftPressed) {
+					switch (stateVector[1]) {
+						case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm :
+							nextStateIndex = 1;
+							stateVector[1] = State.$NullState$;
+
+							timer.unsetTimer(this, 1);
+							break;
+
+						case main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm :
+							nextStateIndex = 1;
+							stateVector[1] = State.$NullState$;
+
+							timer.unsetTimer(this, 2);
+							break;
+
+						default :
+							break;
+					}
+
+					timer.setTimer(this, 5, 1500, false);
+
 					nextStateIndex = 1;
-					stateVector[1] = State.$NullState$;
+					stateVector[1] = State.main_region_digitalwatch_Display_refreshing_AlarmEditCheck;
+				} else {
+					if (sCIButtons.bottomLeftPressed) {
+						nextStateIndex = 1;
+						stateVector[1] = State.$NullState$;
 
-					timer.unsetTimer(this, 2);
+						timer.unsetTimer(this, 2);
 
-					timer.setTimer(this, 2, 1 * 1000, false);
+						sCILogicUnit.operationCallback.setAlarm();
 
-					sCIDisplay.operationCallback.refreshTimeDisplay();
+						timer.setTimer(this, 1, 1 * 1000, false);
 
-					sCIDisplay.operationCallback.refreshDateDisplay();
+						sCIDisplay.operationCallback.refreshTimeDisplay();
 
-					nextStateIndex = 1;
-					stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm;
+						sCIDisplay.operationCallback.refreshDateDisplay();
+
+						sCIDisplay.operationCallback.refreshAlarmDisplay();
+
+						nextStateIndex = 1;
+						stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_showAlarm;
+					} else {
+						if (timeEvents[2]) {
+							nextStateIndex = 1;
+							stateVector[1] = State.$NullState$;
+
+							timer.unsetTimer(this, 2);
+
+							timer.setTimer(this, 2, 1 * 1000, false);
+
+							sCIDisplay.operationCallback.refreshTimeDisplay();
+
+							sCIDisplay.operationCallback.refreshDateDisplay();
+
+							nextStateIndex = 1;
+							stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm;
+						}
+					}
 				}
 			}
 		}
@@ -656,13 +827,91 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		}
 	}
 
+	/* The reactions of state TimeEditCheck. */
+	private void reactMain_region_digitalwatch_Display_refreshing_TimeEditCheck() {
+		if (timeEvents[4]) {
+			nextStateIndex = 1;
+			stateVector[1] = State.$NullState$;
+
+			timer.unsetTimer(this, 4);
+
+			nextStateIndex = 1;
+			stateVector[1] = State.main_region_digitalwatch_Display_refreshing_TimeEditMode;
+		} else {
+			if (sCIButtons.bottomRightReleased) {
+				nextStateIndex = 1;
+				stateVector[1] = State.$NullState$;
+
+				timer.unsetTimer(this, 4);
+
+				sCIState.timeMode = true;
+
+				sCIState.chronoMode = false;
+
+				timer.setTimer(this, 2, 1 * 1000, false);
+
+				sCIDisplay.operationCallback.refreshTimeDisplay();
+
+				sCIDisplay.operationCallback.refreshDateDisplay();
+
+				nextStateIndex = 1;
+				stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm;
+			}
+		}
+	}
+
+	/* The reactions of state TimeEditMode. */
+	private void reactMain_region_digitalwatch_Display_refreshing_TimeEditMode() {
+	}
+
+	/* The reactions of state AlarmEditCheck. */
+	private void reactMain_region_digitalwatch_Display_refreshing_AlarmEditCheck() {
+		if (timeEvents[5]) {
+			nextStateIndex = 1;
+			stateVector[1] = State.$NullState$;
+
+			timer.unsetTimer(this, 5);
+
+			sCILogicUnit.operationCallback.startAlarmEditMode();
+
+			sCIState.firsttime = false;
+
+			nextStateIndex = 1;
+			stateVector[1] = State.main_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start;
+		} else {
+			if (sCIButtons.bottomLeftReleased) {
+				nextStateIndex = 1;
+				stateVector[1] = State.$NullState$;
+
+				timer.unsetTimer(this, 5);
+
+				sCIState.timeMode = true;
+
+				sCIState.chronoMode = false;
+
+				timer.setTimer(this, 2, 1 * 1000, false);
+
+				sCIDisplay.operationCallback.refreshTimeDisplay();
+
+				sCIDisplay.operationCallback.refreshDateDisplay();
+
+				nextStateIndex = 1;
+				stateVector[1] = State.main_region_digitalwatch_Display_refreshing_RefreshingTime_timeView_hideAlarm;
+			}
+		}
+	}
+
+	/* The reactions of state Start. */
+	private void reactMain_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start() {
+	}
+
 	/* The reactions of state ChronoIdle. */
 	private void reactMain_region_digitalwatch_Counting_chromo_time_ChronoIdle() {
 		if ((sCIButtons.bottomRightPressed) && sCIState.chronoMode) {
 			nextStateIndex = 2;
 			stateVector[2] = State.$NullState$;
 
-			timer.setTimer(this, 4, 1 * 1000, false);
+			timer.setTimer(this, 6, 10, false);
 
 			sCILogicUnit.operationCallback.increaseChronoByOne();
 
@@ -673,13 +922,13 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 	/* The reactions of state countingChrono. */
 	private void reactMain_region_digitalwatch_Counting_chromo_time_countingChrono() {
-		if (timeEvents[4]) {
+		if (timeEvents[6]) {
 			nextStateIndex = 2;
 			stateVector[2] = State.$NullState$;
 
-			timer.unsetTimer(this, 4);
+			timer.unsetTimer(this, 6);
 
-			timer.setTimer(this, 4, 1 * 1000, false);
+			timer.setTimer(this, 6, 10, false);
 
 			sCILogicUnit.operationCallback.increaseChronoByOne();
 
@@ -690,7 +939,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 4);
+				timer.unsetTimer(this, 6);
 
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_Counting_chromo_time_ChronoIdle;
@@ -698,55 +947,59 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		}
 	}
 
+	/* The reactions of state Idle. */
+	private void reactMain_region_digitalwatch_InitializeTime_Idle() {
+	}
+
 	/* The reactions of state GlowOff. */
 	private void reactMain_region_digitalwatch_Display_glowing_GlowOff() {
 		if (sCIButtons.topRightPressed) {
-			nextStateIndex = 3;
-			stateVector[3] = State.$NullState$;
+			nextStateIndex = 4;
+			stateVector[4] = State.$NullState$;
 
 			sCIDisplay.operationCallback.setIndiglo();
 
-			nextStateIndex = 3;
-			stateVector[3] = State.main_region_digitalwatch_Display_glowing_GlowOn;
+			nextStateIndex = 4;
+			stateVector[4] = State.main_region_digitalwatch_Display_glowing_GlowOn;
 		}
 	}
 
 	/* The reactions of state GlowOn. */
 	private void reactMain_region_digitalwatch_Display_glowing_GlowOn() {
 		if (sCIButtons.topRightReleased) {
-			nextStateIndex = 3;
-			stateVector[3] = State.$NullState$;
+			nextStateIndex = 4;
+			stateVector[4] = State.$NullState$;
 
-			timer.setTimer(this, 5, 2 * 1000, false);
+			timer.setTimer(this, 7, 2 * 1000, false);
 
-			nextStateIndex = 3;
-			stateVector[3] = State.main_region_digitalwatch_Display_glowing_GlowDelay;
+			nextStateIndex = 4;
+			stateVector[4] = State.main_region_digitalwatch_Display_glowing_GlowDelay;
 		}
 	}
 
 	/* The reactions of state GlowDelay. */
 	private void reactMain_region_digitalwatch_Display_glowing_GlowDelay() {
-		if (timeEvents[5]) {
-			nextStateIndex = 3;
-			stateVector[3] = State.$NullState$;
+		if (timeEvents[7]) {
+			nextStateIndex = 4;
+			stateVector[4] = State.$NullState$;
 
-			timer.unsetTimer(this, 5);
+			timer.unsetTimer(this, 7);
 
 			sCIDisplay.operationCallback.unsetIndiglo();
 
-			nextStateIndex = 3;
-			stateVector[3] = State.main_region_digitalwatch_Display_glowing_GlowOff;
+			nextStateIndex = 4;
+			stateVector[4] = State.main_region_digitalwatch_Display_glowing_GlowOff;
 		} else {
 			if (sCIButtons.topRightPressed) {
-				nextStateIndex = 3;
-				stateVector[3] = State.$NullState$;
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
 
-				timer.unsetTimer(this, 5);
+				timer.unsetTimer(this, 7);
 
 				sCIDisplay.operationCallback.setIndiglo();
 
-				nextStateIndex = 3;
-				stateVector[3] = State.main_region_digitalwatch_Display_glowing_GlowOn;
+				nextStateIndex = 4;
+				stateVector[4] = State.main_region_digitalwatch_Display_glowing_GlowOn;
 			}
 		}
 	}
@@ -773,11 +1026,26 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				case main_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_resetChronoTime :
 					reactMain_region_digitalwatch_Display_refreshing_ChromoMode_Chromo_resetChronoTime();
 					break;
+				case main_region_digitalwatch_Display_refreshing_TimeEditCheck :
+					reactMain_region_digitalwatch_Display_refreshing_TimeEditCheck();
+					break;
+				case main_region_digitalwatch_Display_refreshing_TimeEditMode :
+					reactMain_region_digitalwatch_Display_refreshing_TimeEditMode();
+					break;
+				case main_region_digitalwatch_Display_refreshing_AlarmEditCheck :
+					reactMain_region_digitalwatch_Display_refreshing_AlarmEditCheck();
+					break;
+				case main_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start :
+					reactMain_region_digitalwatch_Display_refreshing_AlarmEditMode_AlarmEdit_Start();
+					break;
 				case main_region_digitalwatch_Counting_chromo_time_ChronoIdle :
 					reactMain_region_digitalwatch_Counting_chromo_time_ChronoIdle();
 					break;
 				case main_region_digitalwatch_Counting_chromo_time_countingChrono :
 					reactMain_region_digitalwatch_Counting_chromo_time_countingChrono();
+					break;
+				case main_region_digitalwatch_InitializeTime_Idle :
+					reactMain_region_digitalwatch_InitializeTime_Idle();
 					break;
 				case main_region_digitalwatch_Display_glowing_GlowOff :
 					reactMain_region_digitalwatch_Display_glowing_GlowOff();
