@@ -68,16 +68,12 @@ public interface IDigitalwatchStatemachine
 
 	public SCILogicUnit getSCILogicUnit();
 
-	public interface SCIState {
-		public boolean getTimeMode();
-		public void setTimeMode(boolean value);
-		public boolean getChronoMode();
-		public void setChronoMode(boolean value);
-		public boolean getFirsttime();
-		public void setFirsttime(boolean value);
+	public interface SCIHelper {
+		public boolean getIsEditingTime();
+		public void setIsEditingTime(boolean value);
 
 	}
 
-	public SCIState getSCIState();
+	public SCIHelper getSCIHelper();
 
 }
