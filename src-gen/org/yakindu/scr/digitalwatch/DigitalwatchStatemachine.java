@@ -3,7 +3,7 @@ import org.yakindu.scr.ITimer;
 
 public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
-	private final boolean[] timeEvents = new boolean[10];
+	private final boolean[] timeEvents = new boolean[12];
 
 	private final class SCIButtonsImpl implements SCIButtons {
 
@@ -119,7 +119,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 	private SCIHelperImpl sCIHelper;
 
 	public enum State {
-		main_region_digitalwatch, main_region_digitalwatch_timeCounting_Counting, main_region_digitalwatch_chronoCounting_Inactive, main_region_digitalwatch_chronoCounting_Active, main_region_digitalwatch_displayRefreshing_showTime, main_region_digitalwatch_displayRefreshing_showChrono, main_region_digitalwatch_displayRefreshing_waitTimeEdit, main_region_digitalwatch_displayRefreshing_editMode, main_region_digitalwatch_displayRefreshing_waitAlarmEdit, main_region_digitalwatch_displayRefreshing_switchSelect, main_region_digitalwatch_displayRefreshing_increaseSelection, main_region_digitalwatch_displayGlowing_GlowOff, main_region_digitalwatch_displayGlowing_GlowOn, main_region_digitalwatch_displayGlowing_GlowDelay, $NullState$
+		main_region_digitalwatch, main_region_digitalwatch_timeCounting_Counting, main_region_digitalwatch_chronoCounting_Inactive, main_region_digitalwatch_chronoCounting_Active, main_region_digitalwatch_displayRefreshing_showTime, main_region_digitalwatch_displayRefreshing_showChrono, main_region_digitalwatch_displayRefreshing_waitTimeEdit, main_region_digitalwatch_displayRefreshing_editMode, main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1, main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2, main_region_digitalwatch_displayRefreshing_waitAlarmEdit, main_region_digitalwatch_displayRefreshing_switchSelect, main_region_digitalwatch_displayRefreshing_increaseSelection, main_region_digitalwatch_displayGlowing_GlowOff, main_region_digitalwatch_displayGlowing_GlowOn, main_region_digitalwatch_displayGlowing_GlowDelay, $NullState$
 	};
 
 	private final State[] stateVector = new State[4];
@@ -178,6 +178,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		sCIDisplay.operationCallback.refreshDateDisplay();
 
 		sCIDisplay.operationCallback.refreshAlarmDisplay();
+
+		sCIHelper.isEditingTime = false;
 
 		nextStateIndex = 2;
 		stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
@@ -240,9 +242,20 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				timer.unsetTimer(this, 4);
 				break;
 
-			case main_region_digitalwatch_displayRefreshing_editMode :
+			case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
+
+				timer.unsetTimer(this, 6);
+
+				timer.unsetTimer(this, 5);
+				break;
+
+			case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+				nextStateIndex = 2;
+				stateVector[2] = State.$NullState$;
+
+				timer.unsetTimer(this, 7);
 
 				timer.unsetTimer(this, 5);
 				break;
@@ -251,21 +264,21 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 6);
+				timer.unsetTimer(this, 8);
 				break;
 
 			case main_region_digitalwatch_displayRefreshing_switchSelect :
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 7);
+				timer.unsetTimer(this, 9);
 				break;
 
 			case main_region_digitalwatch_displayRefreshing_increaseSelection :
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 8);
+				timer.unsetTimer(this, 10);
 				break;
 
 			default :
@@ -287,7 +300,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 3;
 				stateVector[3] = State.$NullState$;
 
-				timer.unsetTimer(this, 9);
+				timer.unsetTimer(this, 11);
 				break;
 
 			default :
@@ -338,7 +351,14 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			case main_region_digitalwatch_displayRefreshing_waitTimeEdit :
 				return stateVector[2] == State.main_region_digitalwatch_displayRefreshing_waitTimeEdit;
 			case main_region_digitalwatch_displayRefreshing_editMode :
-				return stateVector[2] == State.main_region_digitalwatch_displayRefreshing_editMode;
+				return stateVector[2].ordinal() >= State.main_region_digitalwatch_displayRefreshing_editMode
+						.ordinal()
+						&& stateVector[2].ordinal() <= State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2
+								.ordinal();
+			case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+				return stateVector[2] == State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1;
+			case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+				return stateVector[2] == State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2;
 			case main_region_digitalwatch_displayRefreshing_waitAlarmEdit :
 				return stateVector[2] == State.main_region_digitalwatch_displayRefreshing_waitAlarmEdit;
 			case main_region_digitalwatch_displayRefreshing_switchSelect :
@@ -476,6 +496,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			sCIDisplay.operationCallback.refreshAlarmDisplay();
 
+			sCIHelper.isEditingTime = false;
+
 			nextStateIndex = 2;
 			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
 		} else {
@@ -509,7 +531,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 						sCILogicUnit.operationCallback.setAlarm();
 
-						timer.setTimer(this, 6, 1500, false);
+						timer.setTimer(this, 8, 1500, false);
 
 						nextStateIndex = 2;
 						stateVector[2] = State.main_region_digitalwatch_displayRefreshing_waitAlarmEdit;
@@ -548,6 +570,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 				sCIDisplay.operationCallback.refreshAlarmDisplay();
 
+				sCIHelper.isEditingTime = false;
+
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
 			} else {
@@ -582,8 +606,12 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			timer.setTimer(this, 5, 5 * 1000, false);
 
+			timer.setTimer(this, 6, 500, false);
+
+			sCIDisplay.operationCallback.showSelection();
+
 			nextStateIndex = 2;
-			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode;
+			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1;
 		} else {
 			if (sCIButtons.bottomRightReleased) {
 				nextStateIndex = 2;
@@ -599,17 +627,35 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 				sCIDisplay.operationCallback.refreshAlarmDisplay();
 
+				sCIHelper.isEditingTime = false;
+
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
 			}
 		}
 	}
 
-	/* The reactions of state editMode. */
-	private void reactMain_region_digitalwatch_displayRefreshing_editMode() {
+	/* The reactions of state Blink1. */
+	private void reactMain_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1() {
 		if (timeEvents[5]) {
-			nextStateIndex = 2;
-			stateVector[2] = State.$NullState$;
+			switch (stateVector[2]) {
+				case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+					nextStateIndex = 2;
+					stateVector[2] = State.$NullState$;
+
+					timer.unsetTimer(this, 6);
+					break;
+
+				case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+					nextStateIndex = 2;
+					stateVector[2] = State.$NullState$;
+
+					timer.unsetTimer(this, 7);
+					break;
+
+				default :
+					break;
+			}
 
 			timer.unsetTimer(this, 5);
 
@@ -623,40 +669,201 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			sCIDisplay.operationCallback.refreshAlarmDisplay();
 
+			sCIHelper.isEditingTime = false;
+
 			nextStateIndex = 2;
 			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
 		} else {
 			if (sCIButtons.bottomRightPressed) {
-				nextStateIndex = 2;
-				stateVector[2] = State.$NullState$;
+				switch (stateVector[2]) {
+					case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+						nextStateIndex = 2;
+						stateVector[2] = State.$NullState$;
+
+						timer.unsetTimer(this, 6);
+						break;
+
+					case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+						nextStateIndex = 2;
+						stateVector[2] = State.$NullState$;
+
+						timer.unsetTimer(this, 7);
+						break;
+
+					default :
+						break;
+				}
 
 				timer.unsetTimer(this, 5);
 
 				sCILogicUnit.operationCallback.selectNext();
 
-				timer.setTimer(this, 7, 2 * 1000, false);
+				timer.setTimer(this, 9, 2 * 1000, false);
 
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_switchSelect;
 			} else {
 				if (sCIButtons.bottomLeftPressed) {
-					nextStateIndex = 2;
-					stateVector[2] = State.$NullState$;
+					switch (stateVector[2]) {
+						case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+							nextStateIndex = 2;
+							stateVector[2] = State.$NullState$;
+
+							timer.unsetTimer(this, 6);
+							break;
+
+						case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+							nextStateIndex = 2;
+							stateVector[2] = State.$NullState$;
+
+							timer.unsetTimer(this, 7);
+							break;
+
+						default :
+							break;
+					}
 
 					timer.unsetTimer(this, 5);
 
-					timer.setTimer(this, 8, 300, false);
+					timer.setTimer(this, 10, 300, false);
 
 					sCILogicUnit.operationCallback.increaseSelection();
 
-					sCIDisplay.operationCallback.refreshTimeDisplay();
-
-					sCIDisplay.operationCallback.refreshDateDisplay();
-
-					sCIDisplay.operationCallback.refreshAlarmDisplay();
+					sCIDisplay.operationCallback.showSelection();
 
 					nextStateIndex = 2;
 					stateVector[2] = State.main_region_digitalwatch_displayRefreshing_increaseSelection;
+				} else {
+					if (timeEvents[6]) {
+						nextStateIndex = 2;
+						stateVector[2] = State.$NullState$;
+
+						timer.unsetTimer(this, 6);
+
+						timer.setTimer(this, 7, 500, false);
+
+						sCIDisplay.operationCallback.hideSelection();
+
+						nextStateIndex = 2;
+						stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2;
+					}
+				}
+			}
+		}
+	}
+
+	/* The reactions of state Blink2. */
+	private void reactMain_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2() {
+		if (timeEvents[5]) {
+			switch (stateVector[2]) {
+				case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+					nextStateIndex = 2;
+					stateVector[2] = State.$NullState$;
+
+					timer.unsetTimer(this, 6);
+					break;
+
+				case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+					nextStateIndex = 2;
+					stateVector[2] = State.$NullState$;
+
+					timer.unsetTimer(this, 7);
+					break;
+
+				default :
+					break;
+			}
+
+			timer.unsetTimer(this, 5);
+
+			sCIHelper.isEditingTime = false;
+
+			timer.setTimer(this, 2, 1 * 1000, false);
+
+			sCIDisplay.operationCallback.refreshTimeDisplay();
+
+			sCIDisplay.operationCallback.refreshDateDisplay();
+
+			sCIDisplay.operationCallback.refreshAlarmDisplay();
+
+			sCIHelper.isEditingTime = false;
+
+			nextStateIndex = 2;
+			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
+		} else {
+			if (sCIButtons.bottomRightPressed) {
+				switch (stateVector[2]) {
+					case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+						nextStateIndex = 2;
+						stateVector[2] = State.$NullState$;
+
+						timer.unsetTimer(this, 6);
+						break;
+
+					case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+						nextStateIndex = 2;
+						stateVector[2] = State.$NullState$;
+
+						timer.unsetTimer(this, 7);
+						break;
+
+					default :
+						break;
+				}
+
+				timer.unsetTimer(this, 5);
+
+				sCILogicUnit.operationCallback.selectNext();
+
+				timer.setTimer(this, 9, 2 * 1000, false);
+
+				nextStateIndex = 2;
+				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_switchSelect;
+			} else {
+				if (sCIButtons.bottomLeftPressed) {
+					switch (stateVector[2]) {
+						case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+							nextStateIndex = 2;
+							stateVector[2] = State.$NullState$;
+
+							timer.unsetTimer(this, 6);
+							break;
+
+						case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+							nextStateIndex = 2;
+							stateVector[2] = State.$NullState$;
+
+							timer.unsetTimer(this, 7);
+							break;
+
+						default :
+							break;
+					}
+
+					timer.unsetTimer(this, 5);
+
+					timer.setTimer(this, 10, 300, false);
+
+					sCILogicUnit.operationCallback.increaseSelection();
+
+					sCIDisplay.operationCallback.showSelection();
+
+					nextStateIndex = 2;
+					stateVector[2] = State.main_region_digitalwatch_displayRefreshing_increaseSelection;
+				} else {
+					if (timeEvents[7]) {
+						nextStateIndex = 2;
+						stateVector[2] = State.$NullState$;
+
+						timer.unsetTimer(this, 7);
+
+						timer.setTimer(this, 6, 500, false);
+
+						sCIDisplay.operationCallback.showSelection();
+
+						nextStateIndex = 2;
+						stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1;
+					}
 				}
 			}
 		}
@@ -668,7 +875,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			nextStateIndex = 2;
 			stateVector[2] = State.$NullState$;
 
-			timer.unsetTimer(this, 6);
+			timer.unsetTimer(this, 8);
 
 			timer.setTimer(this, 2, 1 * 1000, false);
 
@@ -678,21 +885,27 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			sCIDisplay.operationCallback.refreshAlarmDisplay();
 
+			sCIHelper.isEditingTime = false;
+
 			nextStateIndex = 2;
 			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
 		} else {
-			if (timeEvents[6]) {
+			if (timeEvents[8]) {
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 6);
+				timer.unsetTimer(this, 8);
 
 				sCILogicUnit.operationCallback.startAlarmEditMode();
 
 				timer.setTimer(this, 5, 5 * 1000, false);
 
+				timer.setTimer(this, 6, 500, false);
+
+				sCIDisplay.operationCallback.showSelection();
+
 				nextStateIndex = 2;
-				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode;
+				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1;
 			}
 		}
 	}
@@ -703,20 +916,22 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			nextStateIndex = 2;
 			stateVector[2] = State.$NullState$;
 
-			timer.unsetTimer(this, 7);
+			timer.unsetTimer(this, 9);
 
 			timer.setTimer(this, 5, 5 * 1000, false);
 
+			timer.setTimer(this, 6, 500, false);
+
+			sCIDisplay.operationCallback.showSelection();
+
 			nextStateIndex = 2;
-			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode;
+			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1;
 		} else {
-			if (timeEvents[7]) {
+			if (timeEvents[9]) {
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 7);
-
-				sCIHelper.isEditingTime = false;
+				timer.unsetTimer(this, 9);
 
 				timer.setTimer(this, 2, 1 * 1000, false);
 
@@ -726,6 +941,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 				sCIDisplay.operationCallback.refreshAlarmDisplay();
 
+				sCIHelper.isEditingTime = false;
+
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
 			}
@@ -734,21 +951,19 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 	/* The reactions of state increaseSelection. */
 	private void reactMain_region_digitalwatch_displayRefreshing_increaseSelection() {
-		if (timeEvents[8]) {
+		if (timeEvents[10]) {
 			nextStateIndex = 2;
 			stateVector[2] = State.$NullState$;
 
-			timer.unsetTimer(this, 8);
+			timer.unsetTimer(this, 10);
 
-			timer.setTimer(this, 8, 300, false);
+			sCIDisplay.operationCallback.hideSelection();
+
+			timer.setTimer(this, 10, 300, false);
 
 			sCILogicUnit.operationCallback.increaseSelection();
 
-			sCIDisplay.operationCallback.refreshTimeDisplay();
-
-			sCIDisplay.operationCallback.refreshDateDisplay();
-
-			sCIDisplay.operationCallback.refreshAlarmDisplay();
+			sCIDisplay.operationCallback.showSelection();
 
 			nextStateIndex = 2;
 			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_increaseSelection;
@@ -757,12 +972,16 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 2;
 				stateVector[2] = State.$NullState$;
 
-				timer.unsetTimer(this, 8);
+				timer.unsetTimer(this, 10);
 
 				timer.setTimer(this, 5, 5 * 1000, false);
 
+				timer.setTimer(this, 6, 500, false);
+
+				sCIDisplay.operationCallback.showSelection();
+
 				nextStateIndex = 2;
-				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode;
+				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1;
 			}
 		}
 	}
@@ -786,7 +1005,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			nextStateIndex = 3;
 			stateVector[3] = State.$NullState$;
 
-			timer.setTimer(this, 9, 2 * 1000, false);
+			timer.setTimer(this, 11, 2 * 1000, false);
 
 			nextStateIndex = 3;
 			stateVector[3] = State.main_region_digitalwatch_displayGlowing_GlowDelay;
@@ -795,11 +1014,11 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 	/* The reactions of state GlowDelay. */
 	private void reactMain_region_digitalwatch_displayGlowing_GlowDelay() {
-		if (timeEvents[9]) {
+		if (timeEvents[11]) {
 			nextStateIndex = 3;
 			stateVector[3] = State.$NullState$;
 
-			timer.unsetTimer(this, 9);
+			timer.unsetTimer(this, 11);
 
 			sCIDisplay.operationCallback.unsetIndiglo();
 
@@ -810,7 +1029,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 3;
 				stateVector[3] = State.$NullState$;
 
-				timer.unsetTimer(this, 9);
+				timer.unsetTimer(this, 11);
 
 				sCIDisplay.operationCallback.setIndiglo();
 
@@ -845,8 +1064,11 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				case main_region_digitalwatch_displayRefreshing_waitTimeEdit :
 					reactMain_region_digitalwatch_displayRefreshing_waitTimeEdit();
 					break;
-				case main_region_digitalwatch_displayRefreshing_editMode :
-					reactMain_region_digitalwatch_displayRefreshing_editMode();
+				case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
+					reactMain_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1();
+					break;
+				case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2 :
+					reactMain_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2();
 					break;
 				case main_region_digitalwatch_displayRefreshing_waitAlarmEdit :
 					reactMain_region_digitalwatch_displayRefreshing_waitAlarmEdit();

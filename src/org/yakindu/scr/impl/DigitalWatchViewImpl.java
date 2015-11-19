@@ -223,7 +223,6 @@ public class DigitalWatchViewImpl implements MouseListener, SCIDisplayOperationC
 	// Management of Event listeners (Interface with the State Machine)
 	// ==========================================================
 	private void notifyEvent(String event) {
-		System.out.println(event);
 		if (event.equals("topLeftPressed"))
 			listener.raiseTopLeftPressed();
 		else if (event.equals("topLeftReleased"))
