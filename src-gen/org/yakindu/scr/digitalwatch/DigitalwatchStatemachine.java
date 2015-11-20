@@ -3,7 +3,7 @@ import org.yakindu.scr.ITimer;
 
 public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
-	private final boolean[] timeEvents = new boolean[12];
+	private final boolean[] timeEvents = new boolean[16];
 
 	private final class SCIButtonsImpl implements SCIButtons {
 
@@ -119,10 +119,10 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 	private SCIHelperImpl sCIHelper;
 
 	public enum State {
-		main_region_digitalwatch, main_region_digitalwatch_timeCounting_Counting, main_region_digitalwatch_chronoCounting_Inactive, main_region_digitalwatch_chronoCounting_Active, main_region_digitalwatch_displayRefreshing_showTime, main_region_digitalwatch_displayRefreshing_showChrono, main_region_digitalwatch_displayRefreshing_waitTimeEdit, main_region_digitalwatch_displayRefreshing_editMode, main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1, main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2, main_region_digitalwatch_displayRefreshing_waitAlarmEdit, main_region_digitalwatch_displayRefreshing_switchSelect, main_region_digitalwatch_displayRefreshing_increaseSelection, main_region_digitalwatch_displayGlowing_GlowOff, main_region_digitalwatch_displayGlowing_GlowOn, main_region_digitalwatch_displayGlowing_GlowDelay, $NullState$
+		main_region_digitalwatch, main_region_digitalwatch_timeCounting_Counting, main_region_digitalwatch_chronoCounting_Inactive, main_region_digitalwatch_chronoCounting_Active, main_region_digitalwatch_displayRefreshing_showTime, main_region_digitalwatch_displayRefreshing_showChrono, main_region_digitalwatch_displayRefreshing_waitTimeEdit, main_region_digitalwatch_displayRefreshing_editMode, main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1, main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink2, main_region_digitalwatch_displayRefreshing_waitAlarmEdit, main_region_digitalwatch_displayRefreshing_switchSelect, main_region_digitalwatch_displayRefreshing_increaseSelection, main_region_digitalwatch_displayGlowing_GlowOff, main_region_digitalwatch_displayGlowing_GlowOn, main_region_digitalwatch_displayGlowing_GlowDelay, main_region_digitalwatch_alarm_Inactive, main_region_digitalwatch_alarm_Active, main_region_digitalwatch_alarm_Active_active_Blinking, main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2, main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1, main_region_digitalwatch_alarm_Active_active_Snooze, $NullState$
 	};
 
-	private final State[] stateVector = new State[4];
+	private final State[] stateVector = new State[5];
 
 	private int nextStateIndex;
 
@@ -143,7 +143,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		if (timer == null) {
 			throw new IllegalStateException("timer not set.");
 		}
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 5; i++) {
 			stateVector[i] = State.$NullState$;
 		}
 
@@ -188,6 +188,9 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 		nextStateIndex = 3;
 		stateVector[3] = State.main_region_digitalwatch_displayGlowing_GlowOff;
+
+		nextStateIndex = 4;
+		stateVector[4] = State.main_region_digitalwatch_alarm_Inactive;
 	}
 
 	public void exit() {
@@ -307,6 +310,41 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				break;
 		}
 
+		switch (stateVector[4]) {
+			case main_region_digitalwatch_alarm_Inactive :
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
+				break;
+
+			case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
+
+				timer.unsetTimer(this, 13);
+
+				timer.unsetTimer(this, 12);
+				break;
+
+			case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
+
+				timer.unsetTimer(this, 14);
+
+				timer.unsetTimer(this, 12);
+				break;
+
+			case main_region_digitalwatch_alarm_Active_active_Snooze :
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
+
+				timer.unsetTimer(this, 15);
+				break;
+
+			default :
+				break;
+		}
+
 		exitAction();
 	}
 
@@ -336,7 +374,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			case main_region_digitalwatch :
 				return stateVector[0].ordinal() >= State.main_region_digitalwatch
 						.ordinal()
-						&& stateVector[0].ordinal() <= State.main_region_digitalwatch_displayGlowing_GlowDelay
+						&& stateVector[0].ordinal() <= State.main_region_digitalwatch_alarm_Active_active_Snooze
 								.ordinal();
 			case main_region_digitalwatch_timeCounting_Counting :
 				return stateVector[0] == State.main_region_digitalwatch_timeCounting_Counting;
@@ -371,6 +409,24 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				return stateVector[3] == State.main_region_digitalwatch_displayGlowing_GlowOn;
 			case main_region_digitalwatch_displayGlowing_GlowDelay :
 				return stateVector[3] == State.main_region_digitalwatch_displayGlowing_GlowDelay;
+			case main_region_digitalwatch_alarm_Inactive :
+				return stateVector[4] == State.main_region_digitalwatch_alarm_Inactive;
+			case main_region_digitalwatch_alarm_Active :
+				return stateVector[4].ordinal() >= State.main_region_digitalwatch_alarm_Active
+						.ordinal()
+						&& stateVector[4].ordinal() <= State.main_region_digitalwatch_alarm_Active_active_Snooze
+								.ordinal();
+			case main_region_digitalwatch_alarm_Active_active_Blinking :
+				return stateVector[4].ordinal() >= State.main_region_digitalwatch_alarm_Active_active_Blinking
+						.ordinal()
+						&& stateVector[4].ordinal() <= State.main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1
+								.ordinal();
+			case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+				return stateVector[4] == State.main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2;
+			case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+				return stateVector[4] == State.main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1;
+			case main_region_digitalwatch_alarm_Active_active_Snooze :
+				return stateVector[4] == State.main_region_digitalwatch_alarm_Active_active_Snooze;
 			default :
 				return false;
 		}
@@ -1039,6 +1095,247 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 		}
 	}
 
+	/* The reactions of state Inactive. */
+	private void reactMain_region_digitalwatch_alarm_Inactive() {
+		if (sCILogicUnit.startAlarm) {
+			nextStateIndex = 4;
+			stateVector[4] = State.$NullState$;
+
+			timer.setTimer(this, 12, 4 * 1000, false);
+
+			timer.setTimer(this, 14, 500, false);
+
+			sCIDisplay.operationCallback.setIndiglo();
+
+			nextStateIndex = 4;
+			stateVector[4] = State.main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1;
+		}
+	}
+
+	/* The reactions of state Blink2. */
+	private void reactMain_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2() {
+		if (sCIButtons.bottomLeftPressed) {
+			switch (stateVector[4]) {
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 13);
+
+					timer.unsetTimer(this, 12);
+					break;
+
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 14);
+
+					timer.unsetTimer(this, 12);
+					break;
+
+				case main_region_digitalwatch_alarm_Active_active_Snooze :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 15);
+					break;
+
+				default :
+					break;
+			}
+
+			sCIDisplay.operationCallback.unsetIndiglo();
+
+			nextStateIndex = 4;
+			stateVector[4] = State.main_region_digitalwatch_alarm_Inactive;
+		} else {
+			if (timeEvents[12]) {
+				switch (stateVector[4]) {
+					case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+						nextStateIndex = 4;
+						stateVector[4] = State.$NullState$;
+
+						timer.unsetTimer(this, 13);
+						break;
+
+					case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+						nextStateIndex = 4;
+						stateVector[4] = State.$NullState$;
+
+						timer.unsetTimer(this, 14);
+						break;
+
+					default :
+						break;
+				}
+
+				timer.unsetTimer(this, 12);
+
+				timer.setTimer(this, 15, 56 * 1000, false);
+
+				sCIDisplay.operationCallback.unsetIndiglo();
+
+				nextStateIndex = 4;
+				stateVector[4] = State.main_region_digitalwatch_alarm_Active_active_Snooze;
+			} else {
+				if (timeEvents[13]) {
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 13);
+
+					timer.setTimer(this, 14, 500, false);
+
+					sCIDisplay.operationCallback.setIndiglo();
+
+					nextStateIndex = 4;
+					stateVector[4] = State.main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1;
+				}
+			}
+		}
+	}
+
+	/* The reactions of state Blink1. */
+	private void reactMain_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1() {
+		if (sCIButtons.bottomLeftPressed) {
+			switch (stateVector[4]) {
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 13);
+
+					timer.unsetTimer(this, 12);
+					break;
+
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 14);
+
+					timer.unsetTimer(this, 12);
+					break;
+
+				case main_region_digitalwatch_alarm_Active_active_Snooze :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 15);
+					break;
+
+				default :
+					break;
+			}
+
+			sCIDisplay.operationCallback.unsetIndiglo();
+
+			nextStateIndex = 4;
+			stateVector[4] = State.main_region_digitalwatch_alarm_Inactive;
+		} else {
+			if (timeEvents[12]) {
+				switch (stateVector[4]) {
+					case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+						nextStateIndex = 4;
+						stateVector[4] = State.$NullState$;
+
+						timer.unsetTimer(this, 13);
+						break;
+
+					case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+						nextStateIndex = 4;
+						stateVector[4] = State.$NullState$;
+
+						timer.unsetTimer(this, 14);
+						break;
+
+					default :
+						break;
+				}
+
+				timer.unsetTimer(this, 12);
+
+				timer.setTimer(this, 15, 56 * 1000, false);
+
+				sCIDisplay.operationCallback.unsetIndiglo();
+
+				nextStateIndex = 4;
+				stateVector[4] = State.main_region_digitalwatch_alarm_Active_active_Snooze;
+			} else {
+				if (timeEvents[14]) {
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 14);
+
+					timer.setTimer(this, 13, 500, false);
+
+					sCIDisplay.operationCallback.unsetIndiglo();
+
+					nextStateIndex = 4;
+					stateVector[4] = State.main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2;
+				}
+			}
+		}
+	}
+
+	/* The reactions of state Snooze. */
+	private void reactMain_region_digitalwatch_alarm_Active_active_Snooze() {
+		if (sCIButtons.bottomLeftPressed) {
+			switch (stateVector[4]) {
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 13);
+
+					timer.unsetTimer(this, 12);
+					break;
+
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 14);
+
+					timer.unsetTimer(this, 12);
+					break;
+
+				case main_region_digitalwatch_alarm_Active_active_Snooze :
+					nextStateIndex = 4;
+					stateVector[4] = State.$NullState$;
+
+					timer.unsetTimer(this, 15);
+					break;
+
+				default :
+					break;
+			}
+
+			sCIDisplay.operationCallback.unsetIndiglo();
+
+			nextStateIndex = 4;
+			stateVector[4] = State.main_region_digitalwatch_alarm_Inactive;
+		} else {
+			if (timeEvents[15]) {
+				nextStateIndex = 4;
+				stateVector[4] = State.$NullState$;
+
+				timer.unsetTimer(this, 15);
+
+				timer.setTimer(this, 12, 4 * 1000, false);
+
+				timer.setTimer(this, 14, 500, false);
+
+				sCIDisplay.operationCallback.setIndiglo();
+
+				nextStateIndex = 4;
+				stateVector[4] = State.main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1;
+			}
+		}
+	}
+
 	public void runCycle() {
 
 		clearOutEvents();
@@ -1087,6 +1384,18 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 					break;
 				case main_region_digitalwatch_displayGlowing_GlowDelay :
 					reactMain_region_digitalwatch_displayGlowing_GlowDelay();
+					break;
+				case main_region_digitalwatch_alarm_Inactive :
+					reactMain_region_digitalwatch_alarm_Inactive();
+					break;
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2 :
+					reactMain_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink2();
+					break;
+				case main_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1 :
+					reactMain_region_digitalwatch_alarm_Active_active_Blinking_blinking_Blink1();
+					break;
+				case main_region_digitalwatch_alarm_Active_active_Snooze :
+					reactMain_region_digitalwatch_alarm_Active_active_Snooze();
 					break;
 				default :
 					// $NullState$
