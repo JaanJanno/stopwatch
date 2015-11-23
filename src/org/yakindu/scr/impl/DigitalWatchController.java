@@ -7,10 +7,7 @@ import org.yakindu.scr.digitalwatch.IDigitalwatchStatemachine.SCILogicUnit;
 import org.yakindu.scr.digitalwatch.IDigitalwatchStatemachine.SCILogicUnitOperationCallback;
 
 public class DigitalWatchController implements SCILogicUnitOperationCallback {
-	enum EditionMode {
-		NONE, TIME, ALARM
-	};
-
+	enum EditionMode {NONE, TIME, ALARM};
 	private int timeHour;
 	private int timeMinute;
 	private int timeSecond;
@@ -27,7 +24,7 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 	private EditionMode editionMode;
 	private int currentSelection;
 	private SCILogicUnit eventListener;
-
+	
 	public DigitalWatchController(SCILogicUnit eventListener) {
 		this.eventListener = eventListener;
 		readSystemTime();
@@ -36,17 +33,17 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 		editionMode = EditionMode.NONE;
 		currentSelection = 0;
 	}
-
+	
 	public void readSystemTime() {
 		Calendar calendar = Calendar.getInstance();
 		timeHour = calendar.get(Calendar.HOUR_OF_DAY);
 		timeMinute = calendar.get(Calendar.MINUTE);
 		timeSecond = calendar.get(Calendar.SECOND);
-
-		alarmHour = timeHour;
-		alarmMinute = timeMinute;
-		alarmSecond = timeSecond + 30;
-
+		
+		alarmHour = 12;
+		alarmMinute = 0;
+		alarmSecond = 0;
+		
 		day = calendar.get(Calendar.DAY_OF_MONTH);
 		month = calendar.get(Calendar.MONTH);
 		year = calendar.get(Calendar.YEAR);
@@ -54,8 +51,7 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 
 	@Override
 	public String getTime() {
-		return String
-				.format("%02d:%02d:%02d", timeHour, timeMinute, timeSecond);
+		return String.format("%02d:%02d:%02d", timeHour, timeMinute, timeSecond);
 	}
 
 	@Override
@@ -71,20 +67,18 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 					timeHour = 0;
 			}
 		}
-
-		if (alarm && timeHour == alarmHour && timeMinute == alarmMinute
-				&& timeSecond == alarmSecond)
+		
+		if (alarm && timeHour == alarmHour && timeMinute == alarmMinute && timeSecond == alarmSecond)
 			eventListener.raiseStartAlarm();
-
+		
 		System.out.println("TICK: " + getTime());
 	}
 
 	@Override
 	public String getChrono() {
-		return String.format("%02d:%02d:%02d", chronoMinute, chronoSecond,
-				chronoCentisec);
+		return String.format("%02d:%02d:%02d", chronoMinute, chronoSecond, chronoCentisec);
 	}
-
+	
 	@Override
 	public void increaseChronoByOne() {
 		chronoCentisec++;
@@ -122,11 +116,9 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 	@Override
 	public String getTimeLabelAsForShowing() {
 		if (editionMode.equals(EditionMode.TIME))
-			return String.format("%02d:%02d:%02d", timeHour, timeMinute,
-					timeSecond);
+			return String.format("%02d:%02d:%02d", timeHour, timeMinute, timeSecond);
 		else
-			return String.format("%02d:%02d:%02d", alarmHour, alarmMinute,
-					alarmSecond);
+			return String.format("%02d:%02d:%02d", alarmHour, alarmMinute, alarmSecond);
 	}
 
 	@Override
@@ -142,21 +134,18 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 			m = alarmMinute;
 			s = alarmSecond;
 		}
-
+		
 		switch (currentSelection) {
-		case 0:
-			label = String.format("  :%02d:%02d", m, s);
-			break;
+		case 0: 
+			label = String.format("  :%02d:%02d", m, s); break;
 		case 1:
-			label = String.format("%02d:  :%02d", h, s);
-			break;
+			label = String.format("%02d:  :%02d", h, s); break;
 		case 2:
-			label = String.format("%02d:%02d:  ", h, m);
-			break;
+			label = String.format("%02d:%02d:  ", h, m); break;
 		default:
 			label = String.format("%02d:%02d:%02d", h, m, s);
 		}
-
+		
 		return label;
 	}
 
@@ -169,19 +158,16 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 	public String getDateLabelAsForHiding() {
 		String label;
 		switch (currentSelection) {
-		case 3:
-			label = String.format("  /%02d/%02d", day, year % 100);
-			break;
+		case 3: 
+			label = String.format("  /%02d/%02d", day, year % 100); break;
 		case 4:
-			label = String.format("%02d/  /%02d", month, year % 100);
-			break;
+			label = String.format("%02d/  /%02d", month, year % 100); break;
 		case 5:
-			label = String.format("%02d/%02d/  ", month, day);
-			break;
+			label = String.format("%02d/%02d/  ", month, day); break;
 		default:
 			label = String.format("%02d/%02d/%02d", month, day, year % 100);
 		}
-
+		
 		return label;
 	}
 
@@ -199,50 +185,34 @@ public class DigitalWatchController implements SCILogicUnitOperationCallback {
 
 	@Override
 	public void increaseSelection() {
-		Calendar current = new GregorianCalendar(year, month, day);
+		Calendar current = new GregorianCalendar(year,month, day);
 		
 		if (editionMode == EditionMode.TIME) {
 			switch (currentSelection) {
-			case 0:
-				timeHour = (timeHour + 1) % 24;
-				break;
-			case 1:
-				timeMinute = (timeMinute + 1) % 60;
-				break;
-			case 2:
-				timeSecond = (timeSecond + 1) % 60;
-				break;
-			case 3:
-				month = month + 1 <= 12 ? month + 1 : 1;
-				break;
-			case 4:
-				int maxdays = current.getActualMaximum(Calendar.DAY_OF_MONTH);
-				day = day + 1 <= maxdays ? day + 1 : 1;
-				break;
-			case 5:
-				year++;
+			case 0: timeHour = (timeHour + 1) % 24; break;
+			case 1: timeMinute = (timeMinute + 1) % 60; break;
+			case 2: timeSecond = (timeSecond + 1) % 60; break;
+			case 3: month = month + 1 <= 12 ? month + 1 : 1; break;
+			case 4: int maxdays = current.getActualMaximum(Calendar.DAY_OF_MONTH);
+					day = day + 1 <= maxdays ? day + 1 : 1;
+					break;
+			case 5: year++;
 			}
 		} else {
 			switch (currentSelection) {
-			case 0:
-				alarmHour = (alarmHour + 1) % 24;
-				break;
-			case 1:
-				alarmMinute = (alarmMinute + 1) % 60;
-				break;
-			case 2:
-				alarmSecond = (alarmSecond + 1) % 60;
-				break;
-			}
+			case 0: alarmHour = (alarmHour + 1) % 24; break;
+			case 1: alarmMinute = (alarmMinute + 1) % 60; break;
+			case 2: alarmSecond = (alarmSecond + 1) % 60; break;
+			}			
 		}
 	}
 
 	@Override
 	public void selectNext() {
 		currentSelection++;
-		if ((editionMode == EditionMode.TIME && currentSelection == 6)
-				|| (editionMode == EditionMode.ALARM && currentSelection == 3))
-			currentSelection = 0;
+		if ((editionMode == EditionMode.TIME && currentSelection == 6) ||
+				(editionMode == EditionMode.ALARM && currentSelection == 3))
+			currentSelection = 0;			
 	}
 
 }

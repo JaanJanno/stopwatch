@@ -501,7 +501,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			nextStateIndex = 1;
 			stateVector[1] = State.$NullState$;
 
-			timer.setTimer(this, 1, 1 * 1000, false);
+			timer.setTimer(this, 1, 10, false);
 
 			nextStateIndex = 1;
 			stateVector[1] = State.main_region_digitalwatch_chronoCounting_Active;
@@ -518,7 +518,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			sCILogicUnit.operationCallback.increaseChronoByOne();
 
-			timer.setTimer(this, 1, 1 * 1000, false);
+			timer.setTimer(this, 1, 10, false);
 
 			nextStateIndex = 1;
 			stateVector[1] = State.main_region_digitalwatch_chronoCounting_Active;
@@ -563,7 +563,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 				timer.unsetTimer(this, 2);
 
-				timer.setTimer(this, 3, 1 * 1000, false);
+				timer.setTimer(this, 3, 10, false);
 
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showChrono;
@@ -579,7 +579,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 					nextStateIndex = 2;
 					stateVector[2] = State.main_region_digitalwatch_displayRefreshing_waitTimeEdit;
 				} else {
-					if (sCIButtons.bottomLeftPressed) {
+					if ((sCIButtons.bottomLeftPressed)
+							&& !isStateActive(State.main_region_digitalwatch_alarm_Active)) {
 						nextStateIndex = 2;
 						stateVector[2] = State.$NullState$;
 
@@ -607,7 +608,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			sCIDisplay.operationCallback.refreshChronoDisplay();
 
-			timer.setTimer(this, 3, 1 * 1000, false);
+			timer.setTimer(this, 3, 10, false);
 
 			nextStateIndex = 2;
 			stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showChrono;
@@ -631,7 +632,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showTime;
 			} else {
-				if (sCIButtons.bottomLeftPressed) {
+				if ((sCIButtons.bottomLeftPressed)
+						&& !isStateActive(State.main_region_digitalwatch_alarm_Active)) {
 					nextStateIndex = 2;
 					stateVector[2] = State.$NullState$;
 
@@ -639,7 +641,7 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 					sCILogicUnit.operationCallback.resetChrono();
 
-					timer.setTimer(this, 3, 1 * 1000, false);
+					timer.setTimer(this, 3, 10, false);
 
 					nextStateIndex = 2;
 					stateVector[2] = State.main_region_digitalwatch_displayRefreshing_showChrono;
@@ -759,7 +761,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_switchSelect;
 			} else {
-				if (sCIButtons.bottomLeftPressed) {
+				if ((sCIButtons.bottomLeftPressed)
+						&& !isStateActive(State.main_region_digitalwatch_alarm_Active)) {
 					switch (stateVector[2]) {
 						case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
 							nextStateIndex = 2;
@@ -876,7 +879,8 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 				nextStateIndex = 2;
 				stateVector[2] = State.main_region_digitalwatch_displayRefreshing_switchSelect;
 			} else {
-				if (sCIButtons.bottomLeftPressed) {
+				if ((sCIButtons.bottomLeftPressed)
+						&& !isStateActive(State.main_region_digitalwatch_alarm_Active)) {
 					switch (stateVector[2]) {
 						case main_region_digitalwatch_displayRefreshing_editMode_blinkingEdit_Blink1 :
 							nextStateIndex = 2;
@@ -1147,6 +1151,10 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			sCIDisplay.operationCallback.unsetIndiglo();
 
+			sCILogicUnit.operationCallback.setAlarm();
+
+			sCIDisplay.operationCallback.refreshAlarmDisplay();
+
 			nextStateIndex = 4;
 			stateVector[4] = State.main_region_digitalwatch_alarm_Inactive;
 		} else {
@@ -1231,6 +1239,10 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 
 			sCIDisplay.operationCallback.unsetIndiglo();
 
+			sCILogicUnit.operationCallback.setAlarm();
+
+			sCIDisplay.operationCallback.refreshAlarmDisplay();
+
 			nextStateIndex = 4;
 			stateVector[4] = State.main_region_digitalwatch_alarm_Inactive;
 		} else {
@@ -1314,6 +1326,10 @@ public class DigitalwatchStatemachine implements IDigitalwatchStatemachine {
 			}
 
 			sCIDisplay.operationCallback.unsetIndiglo();
+
+			sCILogicUnit.operationCallback.setAlarm();
+
+			sCIDisplay.operationCallback.refreshAlarmDisplay();
 
 			nextStateIndex = 4;
 			stateVector[4] = State.main_region_digitalwatch_alarm_Inactive;

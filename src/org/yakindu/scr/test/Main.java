@@ -1,7 +1,6 @@
 package org.yakindu.scr.test;
 
 import org.yakindu.scr.RuntimeService;
-import org.yakindu.scr.TimerService;
 import org.yakindu.scr.digitalwatch.DigitalwatchStatemachine;
 import org.yakindu.scr.impl.DigitalWatchController;
 import org.yakindu.scr.impl.DigitalWatchViewImpl;
